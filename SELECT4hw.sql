@@ -3,23 +3,23 @@ from musical_genres_artists mga
 	join musical_genres mg on mga.musical_genre_id = mg.id
 	group by mg.name;
 
-select a.album_release_year, COUNT(*) count_of_albums 
+select a.album_release_year, t.name track, COUNT(*) count_of_tracks
 from tracks t
 	join albums a on a.id = t.album_id
-	group by a.album_release_year 
-	having a.album_release_year between 2019 and 2020;
+	where a.album_release_year between 2019 and 2020
+	group by a.album_release_year, t.name;
 
 select a.name album, AVG(t.duration) track_duration_mean
 from tracks t
 	right join albums a on a.id = t.album_id
 	group by a.name;
 
-select ar.name artist, al.album_release_year, al.name album 
-from artists ar
+select name artist from artists 
+where name != (select ar.name from artists ar
 	full join artists_albums aa on ar.id = aa.artist_id 
 	full join albums al on al.id = aa.album_id
-	group by al.album_release_year, ar.name, al.name
-	having al.album_release_year != 2020 or al.album_release_year is null;
+	where al.album_release_year = 2020);
+
 
 select d.name digest, ar.name artist, t.name track 
 from digests d 
@@ -53,14 +53,20 @@ from artists ar
 	group by ar.name
 	having min(t.duration) = (select min(duration) from tracks);
 
-select al.name album, count(t.album_id) track_num from albums al
-	  full join tracks t on al.id = t.album_id 
-	  group by al.name
-	  having count(t.album_id) = (select min(track_num)
-								  from (select al.name, count(t.album_id) track_num
-								  		from albums al
-	  										full join tracks t on al.id = t.album_id 
-	  										group by al.name) x);
+select al.name album, count(t.album_id) track_num 
+from albums al
+	full join tracks t on al.id = t.album_id 
+	group by al.name
+	having count(t.album_id) = (
+		select count(t.album_id) track_num 
+		from albums al
+			full join tracks t on al.id = t.album_id 
+			group by al.name
+			order by count(t.album_id)
+			limit 1);
+	  
+
+	  									
 
 
 
